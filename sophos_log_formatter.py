@@ -10,8 +10,8 @@ def format_log(log_string):
 
         print()  # Add a newline between sections
 
-
-# Example usage:
-log = ""
+# Read log from file
+with open('log.txt', 'r') as file:
+    log = file.read()
 
 format_log(log)

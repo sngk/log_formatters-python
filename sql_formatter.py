@@ -1,14 +1,11 @@
 import pandas as pd
-from io import StringIO
 
-# Placeholder for the raw data as a string
-data = """
-"""
+# Read raw data from file
+with open('data.txt', 'r') as file:
+    data = file.read()
 
 # Use StringIO to read the string data into a pandas DataFrame
-df = pd.read_csv(StringIO(data), sep='\t')
+df = pd.read_csv(pd.compat.StringIO(data), sep='\t')
 
-# Export the DataFrame to a CSV file
-df.to_csv('formatted_output.csv', index=False)
-
-print("Data has been exported to formatted_output.csv")
+# Print the DataFrame to console
+print(df)

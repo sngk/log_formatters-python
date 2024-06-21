@@ -1,11 +1,10 @@
 import csv
-from io import StringIO
 
-data = """
-"""
+# Read raw data from file
+with open('data.txt', 'r') as file:
+    data = file.read()
 
-
-csv_data = csv.reader(StringIO(data), delimiter='\t')
+csv_data = csv.reader(data.splitlines(), delimiter='\t')
 
 header = next(csv_data)
 
