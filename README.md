@@ -60,3 +60,17 @@ This Python script reads tab-delimited raw data from a file and prints formatted
 ## Customization
 
 - `data.txt`: Replace with your raw data file.
+
+# Memory Usage Parser
+
+The `memory_usage_parser.py` script reads a log file with memory usage data, parses it, and calculates daily statistics (average and median) for total, used, and free memory.
+
+## Usage
+
+1. Place your memory usage log data in a file named `mem.log`.
+2. Open the script file `memory_usage_parser.py`.
+3. Run the script to parse the memory usage data and display the daily statistics.
+
+## Customization
+
+- `file_path`: Replace with the path to your memory usage log file.
