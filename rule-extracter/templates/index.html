@@ -51,13 +51,13 @@
     <h1>Rules Data</h1>
     <p>{{ message }}</p>
     <label for="filterToggle">Show only differences:</label>
-    <input type="checkbox" id="filterToggle" {% if filter_differences == 'differences' %}checked{% endif %}>
+    <input type="checkbox" id="filterToggle" {% if filterDifferences == 'differences' %}checked{% endif %}>
 
     <label for="customerSelect">Select customer:</label>
     <select id="customerSelect">
-        <!-- <option value="all" {% if selected_customer == 'all' %}selected{% endif %}>All Customers</option> -->
-        {% for customer in customer_names %}
-        <option value="{{ customer }}" {% if selected_customer == customer %}selected{% endif %}>{{ customer }}</option>
+        <!-- <option value="all" {% if selectedCustomer == 'all' %}selected{% endif %}>All Customers</option> -->
+        {% for customer in customerNames %}
+        <option value="{{ customer }}" {% if selectedCustomer == customer %}selected{% endif %}>{{ customer }}</option>
         {% endfor %}
     </select>
 
@@ -75,8 +75,8 @@
             </tr>
         </thead>
         <tbody>
-        {% for rule_name, rule in rules.items() %}
-            {% if filter_differences == 'all' or rule.has_differences %}
+        {% for ruleName, rule in rules.items() %}
+            {% if filterDifferences == 'all' or rule.has_differences %}
             <tr class="rule-row">
                 <td class="{{ 'highlight' if rule.ruleName.highlight else 'exact-match' if rule.ruleName.exact_match else '' }}">
                     {{ rule.ruleName.value }}
