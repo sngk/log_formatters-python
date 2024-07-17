@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Rules Data</title>
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.21/css/jquery.dataTables.css">
+    <style>
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            border: 1px solid black;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        .keyword {
+            font-weight: bold;
+            color: blue;
+        }
+        .value {
+            color: black;
+        }
+        .highlight {
+            background-color: yellow;
+        }
+        .exact-match {
+            background-color: lightgreen;
+        }
+        .difference {
+            white-space: pre-wrap; /* to preserve new lines */
+        }
+        /* Add this CSS for sticky header */
+        thead th {
+            position: sticky;
+            top: 0;
+            background-color: #f2f2f2;
+            z-index: 1;
+        }
+        .sticky-header {
+            position: sticky;
+            top: 0;
+            background: #f2f2f2;
+            z-index: 10;
+        }
+    </style>
+</head>
+<body>
+    <h1>Rules Data</h1>
+    <p>{{ message }}</p>
+    <label for="filterToggle">Show only differences:</label>
+    <input type="checkbox" id="filterToggle" {% if filter_differences == 'differences' %}checked{% endif %}>
+
+    <label for="customerSelect">Select customer:</label>
+    <select id="customerSelect">
+        <!-- <option value="all" {% if selected_customer == 'all' %}selected{% endif %}>All Customers</option> -->
+        {% for customer in customer_names %}
+        <option value="{{ customer }}" {% if selected_customer == customer %}selected{% endif %}>{{ customer }}</option>
+        {% endfor %}
+    </select>
+
+    <table id="rulesTable">
+        <thead>
+            <tr>
+                <th>Rule Name</th>
+                <th>Primary Criteria</th>
+                <th>Group By Fields</th>
+                <th>Filter In</th>
+                <th>Threshold</th>
+                <th>Description</th>
+                <th>Details</th>
+                <th>Filter Out</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for rule_name, rule in rules.items() %}
+            {% if filter_differences == 'all' or rule.has_differences %}
+            <tr class="rule-row">
+                <td class="{{ 'highlight' if rule.ruleName.highlight else 'exact-match' if rule.ruleName.exact_match else '' }}">
+                    {{ rule.ruleName.value }}
+                </td>
+                <td>
+                    <ul>
+                    {% for item in rule.primaryCriteria %}
+                        <li class="{{ 'highlight' if item.highlight else 'exact-match' if item.exact_match else '' }}">
+                            <span class="keyword">{{ item.name }}:</span> 
+                            <span class="value difference">{{ item.value }}</span>
+                        </li>
+                    {% endfor %}
+                    </ul>
+                </td>
+                <td>
+                    <ul>
+                    {% for field in rule.groupByFields %}
+                        <li class="{{ 'highlight' if field.highlight else 'exact-match' if field.exact_match else '' }}">
+                            <span class="value difference">{{ field.value }}</span>
+                        </li>
+                    {% endfor %}
+                    </ul>
+                </td>
+                <td>
+                    <ul>
+                    {% for item in rule.filterIn %}
+                        <li class="{{ 'highlight' if item.highlight else 'exact-match' if item.exact_match else '' }}">
+                            <span class="keyword">{{ item.name }}:</span> 
+                            <span class="value difference">{{ item.value }}</span>
+                        </li>
+                    {% endfor %}
+                    </ul>
+                </td>
+                <td>
+                    <ul>
+                    {% for item in rule.threshold %}
+                        <li class="{{ 'highlight' if item.highlight else 'exact-match' if item.exact_match else '' }}">
+                            <span class="value difference">{{ item.value }}</span>
+                        </li>
+                    {% endfor %}
+                    </ul>
+                </td>
+                <td class="{{ 'highlight' if rule.description.highlight else 'exact-match' if rule.description.exact_match else '' }}">
+                    {{ rule.description.value | safe}}
+                </td>
+                <td class="{{ 'highlight' if rule.details.highlight else 'exact-match' if rule.details.exact_match else '' }}">
+                    <div class="value difference">{{ rule.details.value | safe }}</div>
+                </td>
+                <td>
+                    <ul>
+                    {% for item in rule.filterOut %}
+                        <li class="{{ 'highlight' if item.highlight else 'exact-match' if item.exact_match else '' }}">
+                            <span class="keyword">{{ item.name }}:</span> 
+                            <span class="value difference">{{ item.value }}</span>
+                        </li>
+                    {% endfor %}
+                    </ul>
+                </td>
+            </tr>
+            {% endif %}
+        {% endfor %}
+        </tbody>
+    </table>
+    
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.10.21/js/jquery.dataTables.js"></script>
+    <script>
+        $(document).ready( function () {
+            $('#rulesTable').DataTable({
+                "lengthMenu": [[-1, 10, 25, 50, 100], ["All", 10, 25, 50, 100]],
+                "pageLength": -1 // Default to "All" entries
+            });
+
+            $('#filterToggle').change(function() {
+                var showDifferences = $(this).is(':checked');
+                var customer = $('#customerSelect').val();
+                window.location.href = '/compare?filter=' + (showDifferences ? 'differences' : 'all') + '&customer=' + customer;
+            });
+
+            $('#customerSelect').change(function() {
+                var customer = $(this).val();
+                var showDifferences = $('#filterToggle').is(':checked');
+                window.location.href = '/compare?filter=' + (showDifferences ? 'differences' : 'all') + '&customer=' + customer;
+            });
+        });
+    </script>
+</body>
+</html>
