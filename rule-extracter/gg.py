@@ -88,16 +88,16 @@ def extractData(rules):
     return extractedData
 
 def formatDifferences(masterValue, differences, labels):
-    formattedDiff = f'[Master]\r\n'
-    for value in masterValue:
-        formattedDiff += f'{value}\r\n'
+    formattedDiff = f'<b>[Master]</b> <code>{masterValue[0]}</code>'
+    for value in masterValue[1:]:
+        formattedDiff += f'<code>{value}</code>'
     for label, diff in zip(labels, differences):
-        formattedDiff += f'[{label}]\r\n'
+        formattedDiff += f'<b>[{label}]</b>'
         if isinstance(diff, list):
             for d in diff:
-                formattedDiff += f'{d}\r\n'
+                formattedDiff += f'<code>{d}</code>'
         else:
-            formattedDiff += f'{diff}\r\n'
+            formattedDiff += f'<code>{diff}</code>'
     return formattedDiff
 
 def hasDifferences(rule):
@@ -116,7 +116,7 @@ def compareData(masterData, dataList, labels):
         for key, masterValue in masterRule.items():
             if key == "ruleName":  # Skip ruleName for comparison
                 comparisonResult[ruleName][key] = {
-                    "value": f'[Master] {masterValue}',
+                    "value": f'<b>[Master]</b> <code>{masterValue}</code>',
                     "highlight": False,
                     "exact_match": True
                 }
@@ -150,17 +150,18 @@ def compareData(masterData, dataList, labels):
                 valueList = []
                 for item in masterValue:
                     if isinstance(item, dict):
-                        valueList.append({'name': item['name'], 'value': f'[Master] {item["value"]}', 'highlight': not allSame})
+                        valueList.append({'name': item['name'], 'value': f'<b>[Master]</b> <code>{item["value"]}</code>', 'highlight': not allSame})
                 for idx, otherRule in enumerate(dataList):
                     otherValue = otherRule.get(ruleName, {}).get(key, [])
                     for item in otherValue:
                         if isinstance(item, dict):
-                            valueList.append({'name': item['name'], 'value': f'[{labels[idx + 1]}] {item["value"]}', 'highlight': not allSame})
+                            labelIndex = idx + 1 if idx + 1 < len(labels) else 0
+                            valueList.append({'name': item['name'], 'value': f'<b>[{labels[labelIndex]}]</b> <code>{item["value"]}</code>', 'highlight': not allSame})
                 comparisonResult[ruleName][key] = valueList
             else:
                 if allSame:
                     comparisonResult[ruleName][key] = {
-                        "value": f'[Master] {masterValue}',
+                        "value": f'<b>[Master]</b> <code>{masterValue}</code>',
                         "highlight": False,
                         "exact_match": True
                     }
@@ -175,17 +176,22 @@ def compareData(masterData, dataList, labels):
         comparisonResult[ruleName]['has_differences'] = hasDifferences(comparisonResult[ruleName])
 
     return comparisonResult, "Comparison complete. Differences highlighted."
-
+    
 @app.route('/')
 def index():
     filterDifferences = request.args.get('filter', 'all')
     selectedCustomer = request.args.get('customer', 'all')
 
     # Perform default comparison with all customers
-    allRules = loadJsonData(jsonFiles)
+    if selectedCustomer == 'all':
+        allRules = loadJsonData(jsonFiles)
+    else:
+        selectedFiles = [masterFile] + [os.path.join(jsonDir, f'{selectedCustomer}.json')]
+        allRules = loadJsonData(selectedFiles)
+
     masterData = extractData(allRules[0])
     otherData = [extractData(rules) for rules in allRules[1:]]
-    labels = customerNames
+    labels = ['Master'] + (customerNames[1:] if selectedCustomer == 'all' else [selectedCustomer])
 
     comparedData, message = compareData(masterData, otherData, labels)
 
@@ -197,14 +203,15 @@ def compare():
     selectedCustomer = request.args.get('customer', 'all')
 
     if selectedCustomer == 'all':
-        selectedFiles = jsonFiles[1:]  # Exclude the master file
+        allRules = loadJsonData(jsonFiles)
     else:
-        selectedFiles = [os.path.join(jsonDir, f'{selectedCustomer}.json')]
+        selectedFiles = [masterFile] + [os.path.join(jsonDir, f'{selectedCustomer}.json')]
+        allRules = loadJsonData(selectedFiles)
 
-    allRules = loadJsonData([masterFile] + selectedFiles)
     masterData = extractData(allRules[0])
     otherData = [extractData(rules) for rules in allRules[1:]]
-    labels = ['Master'] + [selectedCustomer] if selectedCustomer != 'all' else customerNames[1:]
+    labels = ['Master'] + (customerNames[1:] if selectedCustomer == 'all' else [selectedCustomer])
+
     comparedData, message = compareData(masterData, otherData, labels)
 
     return render_template('index.html', rules=comparedData, message=message, customerNames=customerNames[1:], selectedCustomer=selectedCustomer, filterDifferences=filterDifferences)

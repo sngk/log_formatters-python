@@ -3,6 +3,7 @@
 <head>
     <title>Rules Data</title>
     <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.21/css/jquery.dataTables.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
     <style>
         table {
             width: 100%;
@@ -32,6 +33,12 @@
         .difference {
             white-space: pre-wrap; /* to preserve new lines */
         }
+        code {
+            background-color: #f9f9f9;
+            border: 1px solid #d1d1d1;
+            border-radius: 3px;
+            padding: 2px 4px;
+        }
         /* Add this CSS for sticky header */
         thead th {
             position: sticky;
@@ -45,17 +52,23 @@
             background: #f2f2f2;
             z-index: 10;
         }
+        .copy-button {
+            margin-left: 5px;
+            padding: 2px 5px;
+            font-size: 12px;
+            cursor: pointer;
+        }
     </style>
 </head>
 <body>
     <h1>Rules Data</h1>
     <p>{{ message }}</p>
-    <label for="filterToggle">Show only differences:</label>
+    <label for="filterToggle"><i class="fa-solid fa-hippo"></i></i></label>
     <input type="checkbox" id="filterToggle" {% if filterDifferences == 'differences' %}checked{% endif %}>
 
-    <label for="customerSelect">Select customer:</label>
+    <br><label for="customerSelect"><i class="fa-solid fa-person-military-pointing"></i></label>
     <select id="customerSelect">
-        <!-- <option value="all" {% if selectedCustomer == 'all' %}selected{% endif %}>All Customers</option> -->
+        <option value="all" {% if selectedCustomer == 'all' %}selected{% endif %}>All Customers</option>
         {% for customer in customerNames %}
         <option value="{{ customer }}" {% if selectedCustomer == customer %}selected{% endif %}>{{ customer }}</option>
         {% endfor %}
@@ -79,61 +92,53 @@
             {% if filterDifferences == 'all' or rule.has_differences %}
             <tr class="rule-row">
                 <td class="{{ 'highlight' if rule.ruleName.highlight else 'exact-match' if rule.ruleName.exact_match else '' }}">
-                    {{ rule.ruleName.value }}
+                    {{ rule.ruleName.value | safe }}
                 </td>
                 <td>
-                    <ul>
                     {% for item in rule.primaryCriteria %}
-                        <li class="{{ 'highlight' if item.highlight else 'exact-match' if item.exact_match else '' }}">
+                        <div class="{{ 'highlight' if item.highlight else 'exact-match' if item.exact_match else '' }}">
                             <span class="keyword">{{ item.name }}:</span> 
-                            <span class="value difference">{{ item.value }}</span>
-                        </li>
+                            <span class="value difference">{{ item.value | safe }}</span>
+                        </div>
                     {% endfor %}
-                    </ul>
                 </td>
                 <td>
-                    <ul>
                     {% for field in rule.groupByFields %}
-                        <li class="{{ 'highlight' if field.highlight else 'exact-match' if field.exact_match else '' }}">
-                            <span class="value difference">{{ field.value }}</span>
-                        </li>
+                        <div class="{{ 'highlight' if field.highlight else 'exact-match' if field.exact_match else '' }}">
+                            <span class="value difference">{{ field.value | safe }}</span>
+                        </div>
                     {% endfor %}
-                    </ul>
                 </td>
                 <td>
-                    <ul>
                     {% for item in rule.filterIn %}
-                        <li class="{{ 'highlight' if item.highlight else 'exact-match' if item.exact_match else '' }}">
+                        <div class="{{ 'highlight' if item.highlight else 'exact-match' if item.exact_match else '' }}">
                             <span class="keyword">{{ item.name }}:</span> 
-                            <span class="value difference">{{ item.value }}</span>
-                        </li>
+                            <span class="value difference">{{ item.value | safe }}</span>
+                        </div>
                     {% endfor %}
-                    </ul>
                 </td>
                 <td>
-                    <ul>
                     {% for item in rule.threshold %}
-                        <li class="{{ 'highlight' if item.highlight else 'exact-match' if item.exact_match else '' }}">
-                            <span class="value difference">{{ item.value }}</span>
-                        </li>
+                        <div class="{{ 'highlight' if item.highlight else 'exact-match' if item.exact_match else '' }}">
+                            <span class="value difference">{{ item.value | safe }}</span>
+                        </div>
                     {% endfor %}
-                    </ul>
                 </td>
                 <td class="{{ 'highlight' if rule.description.highlight else 'exact-match' if rule.description.exact_match else '' }}">
-                    {{ rule.description.value | safe}}
+                    <span class="value difference">{{ rule.description.value | safe }}</span>
+                    <button class="copy-button" onclick="copyCodeToClipboard(this)"><i class="fas fa-copy"></i></button>
                 </td>
                 <td class="{{ 'highlight' if rule.details.highlight else 'exact-match' if rule.details.exact_match else '' }}">
                     <div class="value difference">{{ rule.details.value | safe }}</div>
+                    <button class="copy-button" onclick="copyCodeToClipboard(this)"><i class="fas fa-copy"></i></button>
                 </td>
                 <td>
-                    <ul>
                     {% for item in rule.filterOut %}
-                        <li class="{{ 'highlight' if item.highlight else 'exact-match' if item.exact_match else '' }}">
+                        <div class="{{ 'highlight' if item.highlight else 'exact-match' if item.exact_match else '' }}">
                             <span class="keyword">{{ item.name }}:</span> 
-                            <span class="value difference">{{ item.value }}</span>
-                        </li>
+                            <span class="value difference">{{ item.value | safe }}</span>
+                        </div>
                     {% endfor %}
-                    </ul>
                 </td>
             </tr>
             {% endif %}
@@ -144,24 +149,54 @@
     <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
     <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.10.21/js/jquery.dataTables.js"></script>
     <script>
-        $(document).ready( function () {
+        $(document).ready(function () {
             $('#rulesTable').DataTable({
+                "language": {
+                    "search": '<i class="fas fa-search"></i>'
+                },
                 "lengthMenu": [[-1, 10, 25, 50, 100], ["All", 10, 25, 50, 100]],
-                "pageLength": -1 // Default to "All" entries
+                "pageLength": -1
             });
 
-            $('#filterToggle').change(function() {
+            function toggleFilterToggle() {
+                var customer = $('#customerSelect').val();
+                if (customer === 'all') {
+                    $('#filterToggle').prop('disabled', true);
+                } else {
+                    $('#filterToggle').prop('disabled', false);
+                }
+            }
+
+            toggleFilterToggle();
+
+            $('#filterToggle').change(function () {
                 var showDifferences = $(this).is(':checked');
                 var customer = $('#customerSelect').val();
                 window.location.href = '/compare?filter=' + (showDifferences ? 'differences' : 'all') + '&customer=' + customer;
             });
 
-            $('#customerSelect').change(function() {
+            $('#customerSelect').change(function () {
                 var customer = $(this).val();
                 var showDifferences = $('#filterToggle').is(':checked');
+                toggleFilterToggle();
                 window.location.href = '/compare?filter=' + (showDifferences ? 'differences' : 'all') + '&customer=' + customer;
             });
         });
+
+        function copyCodeToClipboard(button) {
+            var codeElement = button.previousElementSibling.querySelector('code');
+            var text = codeElement.innerText || codeElement.textContent;
+
+            // Remove [Master] or [label] prefix
+            text = text.replace(/^\[.*?\] /, '');
+
+            navigator.clipboard.writeText(text).then(function() {
+            //alert('yeah');
+            }, function(err) {
+            console.error('nah: ', err);
+    });
+}
+
     </script>
 </body>
 </html>
