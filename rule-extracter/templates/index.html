@@ -58,12 +58,24 @@
             font-size: 12px;
             cursor: pointer;
         }
+        .resizable {
+            overflow: hidden;
+            resize: horizontal;
+            min-width: 100px;
+        }
+        .description-col, .details-col {
+            max-width: 1000px;
+            white-space: normal;
+    }
     </style>
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.10.21/js/jquery.dataTables.js"></script>
+    <script src="https://cdn.rawgit.com/alvaro-prieto/colResizable/master/colResizable-1.6.min.js"></script>
 </head>
 <body>
     <h1>Rules Data</h1>
     <p>{{ message }}</p>
-    <label for="filterToggle"><i class="fa-solid fa-hippo"></i></i></label>
+    <label for="filterToggle"><i class="fa-solid fa-hippo"></i></label>
     <input type="checkbox" id="filterToggle" {% if filterDifferences == 'differences' %}checked{% endif %}>
 
     <br><label for="customerSelect"><i class="fa-solid fa-person-military-pointing"></i></label>
@@ -74,6 +86,9 @@
         {% endfor %}
     </select>
 
+    <br>
+    <label for="toggleFilterOut"><i class="fa-solid fa-filter"></i>Filter Out<input type="checkbox" id="toggleFilterOut"> </label>
+
     <table id="rulesTable">
         <thead>
             <tr>
@@ -82,9 +97,9 @@
                 <th>Group By Fields</th>
                 <th>Filter In</th>
                 <th>Threshold</th>
-                <th>Description</th>
-                <th>Details</th>
-                <th>Filter Out</th>
+                <th class="description-col">Description</th>
+                <th class="details-col">Details</th>
+                <th class="filter-out-col">Filter Out</th>
             </tr>
         </thead>
         <tbody>
@@ -124,21 +139,16 @@
                         </div>
                     {% endfor %}
                 </td>
-                <td class="{{ 'highlight' if rule.description.highlight else 'exact-match' if rule.description.exact_match else '' }}">
+                <td class="description-col {{ 'highlight' if rule.description.highlight else 'exact-match' if rule.description.exact_match else '' }}">
                     <span class="value difference">{{ rule.description.value | safe }}</span>
                     <button class="copy-button" onclick="copyCodeToClipboard(this)"><i class="fas fa-copy"></i></button>
                 </td>
-                <td class="{{ 'highlight' if rule.details.highlight else 'exact-match' if rule.details.exact_match else '' }}">
+                <td class="details-col {{ 'highlight' if rule.details.highlight else 'exact-match' if rule.details.exact_match else '' }}">
                     <div class="value difference">{{ rule.details.value | safe }}</div>
                     <button class="copy-button" onclick="copyCodeToClipboard(this)"><i class="fas fa-copy"></i></button>
                 </td>
-                <td>
-                    {% for item in rule.filterOut %}
-                        <div class="{{ 'highlight' if item.highlight else 'exact-match' if item.exact_match else '' }}">
-                            <span class="keyword">{{ item.name }}:</span> 
-                            <span class="value difference">{{ item.value | safe }}</span>
-                        </div>
-                    {% endfor %}
+                <td class="filter-out-col {{ 'highlight' if rule.filterOut.highlight else 'exact-match' if rule.filterOut.exact_match else '' }}">
+                    <span class="value difference">{{ rule.filterOut.value | safe }}</span>
                 </td>
             </tr>
             {% endif %}
@@ -146,8 +156,6 @@
         </tbody>
     </table>
     
-    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
-    <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.10.21/js/jquery.dataTables.js"></script>
     <script>
         $(document).ready(function () {
             $('#rulesTable').DataTable({
@@ -155,16 +163,21 @@
                     "search": '<i class="fas fa-search"></i>'
                 },
                 "lengthMenu": [[-1, 10, 25, 50, 100], ["All", 10, 25, 50, 100]],
-                "pageLength": -1
+                "pageLength": 10
+            });
+
+            $('#rulesTable').colResizable({
+                liveDrag: true,
+                minWidth: 100
             });
 
             function toggleFilterToggle() {
                 var customer = $('#customerSelect').val();
-                if (customer === 'all') {
+/*                if (customer === 'all') {
                     $('#filterToggle').prop('disabled', true);
                 } else {
                     $('#filterToggle').prop('disabled', false);
-                }
+                }*/
             }
 
             toggleFilterToggle();
@@ -181,6 +194,17 @@
                 toggleFilterToggle();
                 window.location.href = '/compare?filter=' + (showDifferences ? 'differences' : 'all') + '&customer=' + customer;
             });
+
+            $('#toggleFilterOut').change(function() {
+                if ($(this).is(':checked')) {
+                    $('.filter-out-col').show();
+                } else {
+                    $('.filter-out-col').hide();
+                }
+            });
+
+            // Initialize the visibility based on the checkbox state
+            $('.filter-out-col').hide();
         });
 
         function copyCodeToClipboard(button) {
@@ -199,4 +223,5 @@
 
     </script>
 </body>
+
 </html>

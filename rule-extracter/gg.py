@@ -103,7 +103,7 @@ def formatDifferences(masterValue, differences, labels):
 def hasDifferences(rule):
     if rule['ruleName']['highlight'] or rule['description']['highlight'] or rule['details']['highlight']:
         return True
-    for item in rule['primaryCriteria'] + rule['filterIn'] + rule['filterOut'] + rule['threshold'] + rule['groupByFields']:
+    for item in rule['primaryCriteria'] + rule['filterIn']+ rule['threshold'] + rule['groupByFields']:
         if item['highlight']:
             return True
     return False
@@ -114,7 +114,7 @@ def compareData(masterData, dataList, labels):
     for ruleName, masterRule in masterData.items():
         comparisonResult[ruleName] = {}
         for key, masterValue in masterRule.items():
-            if key == "ruleName":  # Skip ruleName for comparison
+            if key == "ruleName" or key == "filterOut":  # Skip ruleName for comparison
                 comparisonResult[ruleName][key] = {
                     "value": f'<b>[Master]</b> <code>{masterValue}</code>',
                     "highlight": False,
