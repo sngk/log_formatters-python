@@ -95,7 +95,7 @@ def formatDifferences(masterValue, differences, labels):
         formattedDiff += f'<b>[{label}]</b>'
         if isinstance(diff, list):
             for d in diff:
-                formattedDiff += f'<code>{d}</code>'
+                formattedDiff += f'<code>t {d}</code>'
         else:
             formattedDiff += f'<code>{diff}</code>'
     return formattedDiff
