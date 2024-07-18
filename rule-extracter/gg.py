@@ -217,4 +217,4 @@ def compare():
     return render_template('index.html', rules=comparedData, message=message, customerNames=customerNames[1:], selectedCustomer=selectedCustomer, filterDifferences=filterDifferences)
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=True, host='0.0.0.0', port=443, ssl_context=('cert.pem', 'key.pem'))
