@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Missing Rules</title>
+    <style>
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            border: 1px solid black;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        .highlight {
+            background-color: yellow;
+        }
+        .exact-match {
+            background-color: lightgreen;
+        }
+        .excluded-rule {
+            background-color: lightcoral;
+        }
+        code {
+            background-color: #f9f9f9;
+            border: 1px solid #d1d1d1;
+            border-radius: 3px;
+            padding: 2px 4px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Missing Rules in the Golden Image from the Customer</h1>
+    <p>{{ message }}</p>
+
+    <br><label for="customerSelect"><i class="fa-solid fa-person-military-pointing"></i></label>
+    <select id="customerSelect">
+        <option value="all" {% if selectedCustomer == 'all' %}selected{% endif %}>All Customers</option>
+        {% for customer in customerNames %}
+        <option value="{{ customer }}" {% if selectedCustomer == customer %}selected{% endif %}>{{ customer }}</option>
+        {% endfor %}
+    </select>
+
+    <label for="excludeToggle"><input type="checkbox" id="excludeToggle" {% if include_excluded %}checked{% endif %}> Include Excluded Rules</label>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Missing Rule Names</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for rule in missing_rules %}
+            <tr class="{% if rule in excluded_rules %}excluded-rule{% endif %}">
+                <td>{{ rule }}</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+
+    <script>
+        document.getElementById('customerSelect').addEventListener('change', function() {
+            var customer = this.value;
+            var includeExcluded = document.getElementById('excludeToggle').checked ? 'yes' : 'no';
+            window.location.href = '/missing_rules?customer=' + customer + '&include_excluded=' + includeExcluded;
+        });
+
+        document.getElementById('excludeToggle').addEventListener('change', function() {
+            var customer = document.getElementById('customerSelect').value;
+            var includeExcluded = this.checked ? 'yes' : 'no';
+            window.location.href = '/missing_rules?customer=' + customer + '&include_excluded=' + includeExcluded;
+        });
+    </script>
+</body>
+</html>

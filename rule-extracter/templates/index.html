@@ -30,9 +30,7 @@
         .exact-match {
             background-color: lightgreen;
         }
-        .difference {
-            white-space: pre-wrap; /* to preserve new lines */
-        }
+
         code {
             background-color: #f9f9f9;
             border: 1px solid #d1d1d1;
@@ -64,7 +62,12 @@
             min-width: 100px;
         }
         .description-col, .details-col {
-            max-width: 1000px;
+            min-width: 400px;
+            max-width: 800px;
+        }
+        .groupby-col {
+            min-width: 200px;
+            max-width: 500px;
             white-space: normal;
     }
     </style>
@@ -86,8 +89,10 @@
         {% endfor %}
     </select>
 
-    <br>
-    <label for="toggleFilterOut"><i class="fa-solid fa-filter"></i>Filter Out<input type="checkbox" id="toggleFilterOut"> </label>
+    <label for="toggleFilterOut"><input type="checkbox" id="toggleFilterOut"> Show Filter Out</label>
+    <br><i class="fa-solid fa-magnifying-glass-arrow-right"></i><a href="/all_different_rules" target="_blank">Missing in Customer</a>
+    <br><i class="fa-solid fa-magnifying-glass-plus"></i><a href="/missing_rules" target="_blank">Missing in Golden</a>
+
 
     <table id="rulesTable">
         <thead>
@@ -120,7 +125,7 @@
                 <td>
                     {% for field in rule.groupByFields %}
                         <div class="{{ 'highlight' if field.highlight else 'exact-match' if field.exact_match else '' }}">
-                            <span class="value difference">{{ field.value | safe }}</span>
+                            <span class="value difference">{{ field.value | safe }}</span><br>
                         </div>
                     {% endfor %}
                 </td>
@@ -155,7 +160,7 @@
         {% endfor %}
         </tbody>
     </table>
-    
+
     <script>
         $(document).ready(function () {
             $('#rulesTable').DataTable({
@@ -173,7 +178,7 @@
 
             function toggleFilterToggle() {
                 var customer = $('#customerSelect').val();
-/*                if (customer === 'all') {
+                /*if (customer === 'all') {
                     $('#filterToggle').prop('disabled', true);
                 } else {
                     $('#filterToggle').prop('disabled', false);
@@ -223,5 +228,4 @@
 
     </script>
 </body>
-
 </html>
