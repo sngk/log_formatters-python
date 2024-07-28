@@ -5,7 +5,7 @@ from flask import Flask, render_template, request
 app = Flask(__name__)
 
 # Define the path to the current directory containing the JSON files
-jsonDir = os.getcwd()
+jsonDir = ".\\jsons\\"
 
 # List of JSON files and define the master file
 jsonFiles = [os.path.join(jsonDir, f) for f in os.listdir(jsonDir) if f.endswith('.json')]
@@ -90,15 +90,15 @@ def extractData(rules):
 def formatDifferences(masterValue, differences, labels):
     formattedDiff = f'<b>[Master]</b> <code>{masterValue[0]}</code>'
     for value in masterValue[1:]:
-        formattedDiff += f'<code>{value}</code>'
+        formattedDiff += f'\n<code>{value}</code>'
     for label, diff in zip(labels, differences):
-        formattedDiff += f'<b>[{label}]</b>'
+        formattedDiff += f'\n<b>[{label}]</b>'
         if isinstance(diff, list):
             for d in diff:
-                formattedDiff += f'<code>t {d}</code>'
+                formattedDiff += f'\n<code>{d}</code>'
         else:
-            formattedDiff += f'<code>{diff}</code>'
-    return formattedDiff
+            formattedDiff += f'\n<code>{diff}</code>'
+    return formattedDiff.replace('\r\n', '<br>').replace('\n', '<br>')
 
 def hasDifferences(rule):
     if rule['ruleName']['highlight'] or rule['description']['highlight'] or rule['details']['highlight']:
@@ -108,20 +108,34 @@ def hasDifferences(rule):
             return True
     return False
 
-def compareData(masterData, dataList, labels):
+def load_excluded_rules(file_path='rules_ex.txt'):
+    try:
+        with open(file_path, 'r') as file:
+            excluded_rules = [line.strip() for line in file.readlines()]
+        return excluded_rules
+    except FileNotFoundError:
+        return []
+
+def compareData(masterData, dataList, labels, excludedRules):
     comparisonResult = {}
+    allDifferentRules = []
 
     for ruleName, masterRule in masterData.items():
+        if ruleName in excludedRules:
+            continue
+
         comparisonResult[ruleName] = {}
+        ruleExistsInAllCustomers = True
+
         for key, masterValue in masterRule.items():
-            if key == "ruleName" or key == "filterOut":  # Skip ruleName for comparison
+            if key == "ruleName" or key == "filterOut":  # Skip ruleName and filterOut for comparison
                 comparisonResult[ruleName][key] = {
                     "value": f'<b>[Master]</b> <code>{masterValue}</code>',
                     "highlight": False,
                     "exact_match": True
                 }
                 continue
-            
+
             allSame = True
             differences = []
             for otherData in dataList:
@@ -145,7 +159,8 @@ def compareData(masterData, dataList, labels):
                 else:
                     allSame = False
                     differences.append('None')
-            
+                    ruleExistsInAllCustomers = False
+
             if isinstance(masterValue, list):
                 valueList = []
                 for item in masterValue:
@@ -175,7 +190,12 @@ def compareData(masterData, dataList, labels):
 
         comparisonResult[ruleName]['has_differences'] = hasDifferences(comparisonResult[ruleName])
 
-    return comparisonResult, "Comparison complete. Differences highlighted."
+        if not ruleExistsInAllCustomers:
+            allDifferentRules.append(ruleName)
+
+    return comparisonResult, allDifferentRules, "Comparison complete. Differences highlighted."
+
+
     
 @app.route('/')
 def index():
@@ -193,7 +213,8 @@ def index():
     otherData = [extractData(rules) for rules in allRules[1:]]
     labels = ['Master'] + (customerNames[1:] if selectedCustomer == 'all' else [selectedCustomer])
 
-    comparedData, message = compareData(masterData, otherData, labels)
+    excludedRules = load_excluded_rules('rules_ex.txt')
+    comparedData, allDifferentRules, message = compareData(masterData, otherData, labels, excludedRules)
 
     return render_template('index.html', rules=comparedData, message=message, customerNames=customerNames[1:], selectedCustomer=selectedCustomer, filterDifferences=filterDifferences)
 
@@ -212,9 +233,66 @@ def compare():
     otherData = [extractData(rules) for rules in allRules[1:]]
     labels = ['Master'] + (customerNames[1:] if selectedCustomer == 'all' else [selectedCustomer])
 
-    comparedData, message = compareData(masterData, otherData, labels)
+    excludedRules = load_excluded_rules('rules_ex.txt')
+    comparedData, allDifferentRules, message = compareData(masterData, otherData, labels, excludedRules)
 
     return render_template('index.html', rules=comparedData, message=message, customerNames=customerNames[1:], selectedCustomer=selectedCustomer, filterDifferences=filterDifferences)
+
+@app.route('/missing_rules')
+def missing_rules():
+    selectedCustomer = request.args.get('customer', 'all')
+    include_excluded = request.args.get('include_excluded', 'no') == 'yes'
+
+    if selectedCustomer == 'all':
+        message = "Please select a specific customer to compare."
+        return render_template('missing_rules.html', message=message, missing_rules=[], excluded_rules=[], customerNames=customerNames[1:], selectedCustomer=selectedCustomer, include_excluded=include_excluded)
+
+    selectedFiles = [masterFile, os.path.join(jsonDir, f'{selectedCustomer}.json')]
+    allRules = loadJsonData(selectedFiles)
+
+    masterData = extractData(allRules[0])
+    customerData = extractData(allRules[1])
+
+    masterRuleNames = set(masterData.keys())
+    customerRuleNames = set(customerData.keys())
+
+    excludedRules = load_excluded_rules('rules_ex.txt')
+    missingRules = sorted(list(customerRuleNames - masterRuleNames))
+
+    if not include_excluded:
+        missingRules = [rule for rule in missingRules if rule not in excludedRules]
+
+    return render_template('missing_rules.html', missing_rules=missingRules, excluded_rules=excludedRules, customerNames=customerNames[1:], selectedCustomer=selectedCustomer, include_excluded=include_excluded)
+
+
+
+@app.route('/all_different_rules')
+def all_different_rules():
+    selectedCustomer = request.args.get('customer', 'all')
+    include_excluded = request.args.get('include_excluded', 'no') == 'yes'
+
+    if selectedCustomer == 'all':
+        message = "Please select a specific customer to compare."
+        return render_template('all_different_rules.html', message=message, rules=[], excluded_rules=[], customerNames=customerNames[1:], selectedCustomer=selectedCustomer, include_excluded=include_excluded)
+
+    selectedFiles = [masterFile, os.path.join(jsonDir, f'{selectedCustomer}.json')]
+    allRules = loadJsonData(selectedFiles)
+
+    masterData = extractData(allRules[0])
+    customerData = extractData(allRules[1])
+
+    masterRuleNames = set(masterData.keys())
+    customerRuleNames = set(customerData.keys())
+
+    excludedRules = load_excluded_rules('rules_ex.txt')
+    differentRules = sorted(list(masterRuleNames - customerRuleNames))
+
+    if not include_excluded:
+        differentRules = [rule for rule in differentRules if rule not in excludedRules]
+
+    return render_template('all_different_rules.html', rules=differentRules, excluded_rules=excludedRules, customerNames=customerNames[1:], selectedCustomer=selectedCustomer, include_excluded=include_excluded)
+
+
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=443, ssl_context=('cert.pem', 'key.pem'))
