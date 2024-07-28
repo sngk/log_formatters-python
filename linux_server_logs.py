@@ -27,7 +27,7 @@ def parse_csv(file_path):
     return column_data, summary
 
 # Example usage
-file_path = r'E:\OneDrive - SEAMLESS INTELLIGENCE PTY LTD\uploads_and_rules\exports\linux_server_logs\linux_server_logs.csv'  # Use raw string notation for Windows paths
+file_path = r'E:\linux_server_logs.csv'  # Use raw string notation for Windows paths
 column_data, summary = parse_csv(file_path)
 
 print(f"Data in the specified column:")
