@@ -4,21 +4,21 @@ from flask import Flask, render_template, request
 
 app = Flask(__name__)
 
-# Define the path to the current directory containing the JSON files
+# path to the directory with the JSON files
 jsonDir = ".\\jsons\\"
 
 # List of JSON files and define the master file
 jsonFiles = [os.path.join(jsonDir, f) for f in os.listdir(jsonDir) if f.endswith('.json')]
 masterFile = os.path.join(jsonDir, 'goldenimage.json')
 
-# Remove the master file from the list if it's included
+# Remove the master file from the list
 if masterFile in jsonFiles:
     jsonFiles.remove(masterFile)
 
-# Ensure the master file is the first in the list
+# master file is the first in the list
 jsonFiles.insert(0, masterFile)
 
-# Extract customer names from filenames
+# Extract customer names
 customerNames = [os.path.splitext(os.path.basename(f))[0] for f in jsonFiles]
 
 def loadJsonData(fileList):
@@ -202,7 +202,7 @@ def index():
     filterDifferences = request.args.get('filter', 'all')
     selectedCustomer = request.args.get('customer', 'all')
 
-    # Perform default comparison with all customers
+    # comparison with all customers
     if selectedCustomer == 'all':
         allRules = loadJsonData(jsonFiles)
     else:
