@@ -2,3 +2,4 @@
 *.json 
 *.pem
 rule-extracter/rules_ex.txt
+data.txt
