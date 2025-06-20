@@ -1,17 +1,27 @@
 import csv
+import json
 
-# Read raw data from file
-with open('data.txt', 'r') as file:
-    data = file.read()
+# Fields to extract
+selected_fields = ["MPERuleID","CommonEventID","BaseRule","MapTag1", "MapTag2", "MapTag3", "MapTag4", "MapTag5", "MapTag6", "MapTag7", "MapTag8", "MapTag9", "MapTag10", "MapVMID", "MapSIP", "MapDIP", "MapSName", "MapDName", "MapSPort", "MapDPort", "MapProtocolID", "MapLogin", "MapAccount", "MapGroup", "MapDomain", "MapSession", "MapProcess", "MapObject", "MapURL", "MapSender", "MapRecipient", "MapSubject", "MapBytesIn", "MapBytesOut", "MapItemsIn", "MapItemsOut", "MapDuration", "MapAmount", "MapQuantity", "MapRate", "MapSize" "MapSMAC", "MapDMAC", "MapSNATIP", "MapDNATIP", "MapSInterface", "MapDInterface", "MapPID", "MapSeverity", "MapVersion", "MapCommand", "MapObjectName", "MapSNATPort", "MapDNATPort", "MapDomainOrigin", "MapHash", "MapPolicy", "MapVendorInfo", "MapResult", "MapObjectType", "MapCVE", "MapUserAgent", "MapParentProcessId", "MapParentProcessName", "MapParentProcessPath", "MapSerialNumber", "MapReason", "MapStatus", "MapThreatId", "MapThreatName", "MapSessionType", "MapAction", "MapResponseCode"]
 
-csv_data = csv.reader(data.splitlines(), delimiter='\t')
+# Prepare list to store JSON entries
+output = []
 
-header = next(csv_data)
+# Read the TSV file
+with open('data.txt', 'r', encoding='utf-8') as file:
+    csv_data = csv.reader(file.read().splitlines(), delimiter='\t')
+    header = next(csv_data)
 
-name_index = header.index("Name")
-itemdata_index = header.index("ItemData")
+    name_index = header.index("Name")
+    field_indexes = {field: header.index(field) for field in selected_fields if field in header}
 
-for row in csv_data:
-    name = row[name_index]
-    itemdata = row[itemdata_index]
-    print(f"Name: {name} \t\t\t{itemdata}")
+    for row in csv_data:
+        entry = {"Name": row[name_index]}
+        for field, index in field_indexes.items():
+            value = row[index].strip()
+            if value and value != "NULL":
+                entry[field] = value
+        output.append(entry)
+
+# Output as JSON
+print(json.dumps(output, indent=2))
